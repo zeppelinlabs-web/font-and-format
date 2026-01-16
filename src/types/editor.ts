@@ -8,6 +8,24 @@ export interface TextStyle {
   underline: boolean;
 }
 
+export interface BlockStyle {
+  fontFamily: FontFamily;
+  fontSize: number;
+  textColor: string;
+  textAlign: TextAlign;
+  lineHeight: number;
+  headingLevel: HeadingLevel;
+  bold: boolean;
+  italic: boolean;
+  underline: boolean;
+}
+
+export interface TextBlock {
+  id: string;
+  content: string;
+  style: BlockStyle;
+}
+
 export interface DocumentSettings {
   fontFamily: FontFamily;
   fontSize: number;
@@ -24,6 +42,18 @@ export interface PageSettings {
   marginRight: number;
   orientation: 'portrait' | 'landscape';
 }
+
+export const DEFAULT_BLOCK_STYLE: BlockStyle = {
+  fontFamily: 'sans',
+  fontSize: 16,
+  textColor: '#1a1a2e',
+  textAlign: 'left',
+  lineHeight: 1.6,
+  headingLevel: 'p',
+  bold: false,
+  italic: false,
+  underline: false,
+};
 
 export const FONT_FAMILIES: { value: FontFamily; label: string; className: string }[] = [
   { value: 'sans', label: 'Inter', className: 'font-sans' },
@@ -47,3 +77,9 @@ export const TEXT_COLORS = [
   '#dfe6e9',
   '#636e72',
 ];
+
+export const createBlock = (content: string = '', style: Partial<BlockStyle> = {}): TextBlock => ({
+  id: crypto.randomUUID(),
+  content,
+  style: { ...DEFAULT_BLOCK_STYLE, ...style },
+});

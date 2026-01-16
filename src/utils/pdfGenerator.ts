@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { DocumentSettings, TextStyle, FontFamily } from '@/types/editor';
+import { TextBlock, FontFamily } from '@/types/editor';
 
 const FONT_MAP: Record<FontFamily, string> = {
   sans: 'helvetica',
@@ -7,11 +7,7 @@ const FONT_MAP: Record<FontFamily, string> = {
   mono: 'courier',
 };
 
-export const generatePDF = (
-  content: string,
-  settings: DocumentSettings,
-  textStyle: TextStyle
-): void => {
+export const generatePDF = (blocks: TextBlock[]): void => {
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -23,23 +19,6 @@ export const generatePDF = (
   const margin = 20;
   const maxWidth = pageWidth - margin * 2;
 
-  // Set font
-  const fontName = FONT_MAP[settings.fontFamily];
-  let fontStyle = 'normal';
-  if (textStyle.bold && textStyle.italic) {
-    fontStyle = 'bolditalic';
-  } else if (textStyle.bold) {
-    fontStyle = 'bold';
-  } else if (textStyle.italic) {
-    fontStyle = 'italic';
-  }
-
-  // Calculate font size for PDF (points to mm conversion)
-  const fontSize = settings.fontSize * 0.352778;
-
-  pdf.setFont(fontName, fontStyle);
-  pdf.setFontSize(settings.fontSize);
-
   // Parse hex color to RGB
   const hexToRgb = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -50,38 +29,47 @@ export const generatePDF = (
     } : { r: 0, g: 0, b: 0 };
   };
 
-  const color = hexToRgb(settings.textColor);
-  pdf.setTextColor(color.r, color.g, color.b);
-
-  // Split content into lines
-  const paragraphs = content.split('\n');
   let yPosition = margin;
-  const lineHeight = settings.fontSize * settings.lineHeight * 0.352778;
 
-  paragraphs.forEach((paragraph) => {
-    if (!paragraph.trim()) {
-      yPosition += lineHeight;
-      return;
+  blocks.forEach((block) => {
+    if (!block.content.trim()) return;
+
+    const style = block.style;
+    const fontName = FONT_MAP[style.fontFamily];
+    
+    // Determine font style
+    let fontStyle = 'normal';
+    if (style.bold && style.italic) {
+      fontStyle = 'bolditalic';
+    } else if (style.bold) {
+      fontStyle = 'bold';
+    } else if (style.italic) {
+      fontStyle = 'italic';
     }
 
     // Adjust font size for headings
-    let currentFontSize = settings.fontSize;
-    if (settings.headingLevel === 'h1') {
-      currentFontSize = settings.fontSize * 1.5;
-      pdf.setFont(fontName, 'bold');
-    } else if (settings.headingLevel === 'h2') {
-      currentFontSize = settings.fontSize * 1.25;
-      pdf.setFont(fontName, 'bold');
-    } else if (settings.headingLevel === 'h3') {
-      currentFontSize = settings.fontSize * 1.1;
-      pdf.setFont(fontName, 'bold');
-    } else {
-      pdf.setFont(fontName, fontStyle);
+    let fontSize = style.fontSize;
+    if (style.headingLevel === 'h1') {
+      fontSize = style.fontSize * 1.5;
+      fontStyle = 'bold';
+    } else if (style.headingLevel === 'h2') {
+      fontSize = style.fontSize * 1.25;
+      fontStyle = 'bold';
+    } else if (style.headingLevel === 'h3') {
+      fontSize = style.fontSize * 1.1;
+      fontStyle = 'bold';
     }
-    pdf.setFontSize(currentFontSize);
+
+    pdf.setFont(fontName, fontStyle);
+    pdf.setFontSize(fontSize);
+
+    const color = hexToRgb(style.textColor);
+    pdf.setTextColor(color.r, color.g, color.b);
+
+    const lineHeight = fontSize * style.lineHeight * 0.352778;
 
     // Wrap text
-    const lines = pdf.splitTextToSize(paragraph, maxWidth);
+    const lines = pdf.splitTextToSize(block.content, maxWidth);
 
     lines.forEach((line: string) => {
       // Check if we need a new page
@@ -94,16 +82,12 @@ export const generatePDF = (
       let xPosition = margin;
       const textWidth = pdf.getTextWidth(line);
 
-      switch (settings.textAlign) {
+      switch (style.textAlign) {
         case 'center':
           xPosition = (pageWidth - textWidth) / 2;
           break;
         case 'right':
           xPosition = pageWidth - margin - textWidth;
-          break;
-        case 'justify':
-          // jsPDF doesn't support true justify, use left alignment
-          xPosition = margin;
           break;
         default:
           xPosition = margin;
@@ -113,13 +97,9 @@ export const generatePDF = (
       yPosition += lineHeight;
     });
 
-    // Add extra spacing after paragraph
+    // Add spacing after block
     yPosition += lineHeight * 0.5;
   });
 
-  // Add underline if enabled (note: jsPDF doesn't have native underline support)
-  // This would require custom implementation
-
-  // Download the PDF
   pdf.save('document.pdf');
 };

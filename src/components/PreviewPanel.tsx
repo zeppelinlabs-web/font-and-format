@@ -1,31 +1,41 @@
 import { forwardRef } from 'react';
-import { DocumentSettings, TextStyle, FONT_FAMILIES } from '@/types/editor';
+import { TextBlock, FONT_FAMILIES } from '@/types/editor';
 import { cn } from '@/lib/utils';
 
 interface PreviewPanelProps {
-  content: string;
-  settings: DocumentSettings;
-  textStyle: TextStyle;
+  blocks: TextBlock[];
 }
 
 export const PreviewPanel = forwardRef<HTMLDivElement, PreviewPanelProps>(
-  ({ content, settings, textStyle }, ref) => {
-    const fontClass = FONT_FAMILIES.find(f => f.value === settings.fontFamily)?.className || 'font-sans';
-
-    const getHeadingStyles = () => {
-      switch (settings.headingLevel) {
+  ({ blocks }, ref) => {
+    const getBlockStyles = (block: TextBlock) => {
+      const fontClass = FONT_FAMILIES.find(f => f.value === block.style.fontFamily)?.className || 'font-sans';
+      
+      let headingClass = '';
+      switch (block.style.headingLevel) {
         case 'h1':
-          return 'text-3xl font-bold mb-4';
+          headingClass = 'text-3xl font-bold mb-4';
+          break;
         case 'h2':
-          return 'text-2xl font-semibold mb-3';
+          headingClass = 'text-2xl font-semibold mb-3';
+          break;
         case 'h3':
-          return 'text-xl font-medium mb-2';
+          headingClass = 'text-xl font-medium mb-2';
+          break;
         default:
-          return '';
+          headingClass = 'mb-2';
       }
+
+      return cn(
+        fontClass,
+        headingClass,
+        block.style.bold && 'font-bold',
+        block.style.italic && 'italic',
+        block.style.underline && 'underline'
+      );
     };
 
-    const paragraphs = content.split('\n').filter(p => p.trim());
+    const nonEmptyBlocks = blocks.filter(b => b.content.trim());
 
     return (
       <div className="flex-1 bg-preview rounded-xl p-6 overflow-auto flex justify-center">
@@ -33,33 +43,22 @@ export const PreviewPanel = forwardRef<HTMLDivElement, PreviewPanelProps>(
           ref={ref}
           className="preview-page animate-fade-in"
         >
-          <div
-            className={cn(
-              "h-full",
-              fontClass,
-              textStyle.bold && "font-bold",
-              textStyle.italic && "italic",
-              textStyle.underline && "underline"
-            )}
-            style={{
-              fontSize: `${settings.fontSize * 0.75}px`,
-              color: settings.textColor,
-              textAlign: settings.textAlign,
-              lineHeight: settings.lineHeight,
-            }}
-          >
-            {paragraphs.length > 0 ? (
-              paragraphs.map((paragraph, index) => {
-                const Tag = settings.headingLevel === 'p' ? 'p' : settings.headingLevel;
+          <div className="h-full">
+            {nonEmptyBlocks.length > 0 ? (
+              nonEmptyBlocks.map((block) => {
+                const Tag = block.style.headingLevel === 'p' ? 'p' : block.style.headingLevel;
                 return (
                   <Tag 
-                    key={index} 
-                    className={cn(
-                      "mb-3 last:mb-0",
-                      getHeadingStyles()
-                    )}
+                    key={block.id}
+                    className={getBlockStyles(block)}
+                    style={{
+                      fontSize: `${block.style.fontSize * 0.75}px`,
+                      color: block.style.textColor,
+                      textAlign: block.style.textAlign,
+                      lineHeight: block.style.lineHeight,
+                    }}
                   >
-                    {paragraph}
+                    {block.content}
                   </Tag>
                 );
               })

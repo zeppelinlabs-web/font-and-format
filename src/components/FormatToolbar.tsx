@@ -25,28 +25,26 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { 
-  DocumentSettings, 
-  TextStyle, 
+  BlockStyle,
   FONT_FAMILIES, 
   FONT_SIZES, 
   TEXT_COLORS,
   HeadingLevel,
-  TextAlign
+  TextAlign,
+  FontFamily
 } from '@/types/editor';
 import { cn } from '@/lib/utils';
 
 interface FormatToolbarProps {
-  textStyle: TextStyle;
-  settings: DocumentSettings;
-  onTextStyleChange: (style: Partial<TextStyle>) => void;
-  onSettingsChange: (settings: Partial<DocumentSettings>) => void;
+  currentStyle: BlockStyle | null;
+  onStyleChange: (style: Partial<BlockStyle>) => void;
+  hasSelection: boolean;
 }
 
 export const FormatToolbar = ({
-  textStyle,
-  settings,
-  onTextStyleChange,
-  onSettingsChange,
+  currentStyle,
+  onStyleChange,
+  hasSelection,
 }: FormatToolbarProps) => {
   const headingButtons: { level: HeadingLevel; icon: React.ReactNode; label: string }[] = [
     { level: 'p', icon: <Type className="w-4 h-4" />, label: 'Paragraph' },
@@ -62,12 +60,40 @@ export const FormatToolbar = ({
     { align: 'justify', icon: <AlignJustify className="w-4 h-4" /> },
   ];
 
+  const style = currentStyle || {
+    fontFamily: 'sans' as FontFamily,
+    fontSize: 16,
+    textColor: '#1a1a2e',
+    textAlign: 'left' as TextAlign,
+    lineHeight: 1.6,
+    headingLevel: 'p' as HeadingLevel,
+    bold: false,
+    italic: false,
+    underline: false,
+  };
+
   return (
-    <div className="flex items-center gap-1 p-2 bg-toolbar rounded-lg border border-border animate-fade-in">
+    <div className={cn(
+      "flex items-center gap-1 p-2 bg-toolbar rounded-lg border border-border animate-fade-in transition-opacity",
+      !hasSelection && "opacity-60"
+    )}>
+      {/* Selection indicator */}
+      <div className={cn(
+        "px-2 py-1 rounded text-xs font-medium mr-2 transition-colors",
+        hasSelection 
+          ? "bg-primary/10 text-primary" 
+          : "bg-muted text-muted-foreground"
+      )}>
+        {hasSelection ? "Editing block" : "Select a block"}
+      </div>
+
+      <Separator orientation="vertical" className="h-6 mx-1" />
+
       {/* Font Family */}
       <Select
-        value={settings.fontFamily}
-        onValueChange={(value) => onSettingsChange({ fontFamily: value as typeof settings.fontFamily })}
+        value={style.fontFamily}
+        onValueChange={(value) => onStyleChange({ fontFamily: value as FontFamily })}
+        disabled={!hasSelection}
       >
         <SelectTrigger className="w-[130px] h-8 text-sm">
           <SelectValue />
@@ -83,8 +109,9 @@ export const FormatToolbar = ({
 
       {/* Font Size */}
       <Select
-        value={settings.fontSize.toString()}
-        onValueChange={(value) => onSettingsChange({ fontSize: parseInt(value) })}
+        value={style.fontSize.toString()}
+        onValueChange={(value) => onStyleChange({ fontSize: parseInt(value) })}
+        disabled={!hasSelection}
       >
         <SelectTrigger className="w-[70px] h-8 text-sm">
           <SelectValue />
@@ -104,12 +131,13 @@ export const FormatToolbar = ({
       <Popover>
         <PopoverTrigger asChild>
           <button 
-            className="toolbar-button"
+            className={cn("toolbar-button", !hasSelection && "pointer-events-none")}
             title="Text Color"
+            disabled={!hasSelection}
           >
             <div 
               className="w-5 h-5 rounded border border-border" 
-              style={{ backgroundColor: settings.textColor }}
+              style={{ backgroundColor: style.textColor }}
             />
           </button>
         </PopoverTrigger>
@@ -120,10 +148,10 @@ export const FormatToolbar = ({
                 key={color}
                 className={cn(
                   "w-6 h-6 rounded-full border-2 transition-transform hover:scale-110",
-                  settings.textColor === color ? "border-primary" : "border-transparent"
+                  style.textColor === color ? "border-primary" : "border-transparent"
                 )}
                 style={{ backgroundColor: color }}
-                onClick={() => onSettingsChange({ textColor: color })}
+                onClick={() => onStyleChange({ textColor: color })}
               />
             ))}
           </div>
@@ -134,23 +162,26 @@ export const FormatToolbar = ({
 
       {/* Text Style */}
       <button
-        className={cn("toolbar-button", textStyle.bold && "active")}
-        onClick={() => onTextStyleChange({ bold: !textStyle.bold })}
+        className={cn("toolbar-button", style.bold && "active", !hasSelection && "pointer-events-none opacity-50")}
+        onClick={() => onStyleChange({ bold: !style.bold })}
         title="Bold"
+        disabled={!hasSelection}
       >
         <Bold className="w-4 h-4" />
       </button>
       <button
-        className={cn("toolbar-button", textStyle.italic && "active")}
-        onClick={() => onTextStyleChange({ italic: !textStyle.italic })}
+        className={cn("toolbar-button", style.italic && "active", !hasSelection && "pointer-events-none opacity-50")}
+        onClick={() => onStyleChange({ italic: !style.italic })}
         title="Italic"
+        disabled={!hasSelection}
       >
         <Italic className="w-4 h-4" />
       </button>
       <button
-        className={cn("toolbar-button", textStyle.underline && "active")}
-        onClick={() => onTextStyleChange({ underline: !textStyle.underline })}
+        className={cn("toolbar-button", style.underline && "active", !hasSelection && "pointer-events-none opacity-50")}
+        onClick={() => onStyleChange({ underline: !style.underline })}
         title="Underline"
+        disabled={!hasSelection}
       >
         <Underline className="w-4 h-4" />
       </button>
@@ -161,9 +192,14 @@ export const FormatToolbar = ({
       {headingButtons.map((btn) => (
         <button
           key={btn.level}
-          className={cn("toolbar-button", settings.headingLevel === btn.level && "active")}
-          onClick={() => onSettingsChange({ headingLevel: btn.level })}
+          className={cn(
+            "toolbar-button", 
+            style.headingLevel === btn.level && "active",
+            !hasSelection && "pointer-events-none opacity-50"
+          )}
+          onClick={() => onStyleChange({ headingLevel: btn.level })}
           title={btn.label}
+          disabled={!hasSelection}
         >
           {btn.icon}
         </button>
@@ -175,9 +211,14 @@ export const FormatToolbar = ({
       {alignButtons.map((btn) => (
         <button
           key={btn.align}
-          className={cn("toolbar-button", settings.textAlign === btn.align && "active")}
-          onClick={() => onSettingsChange({ textAlign: btn.align })}
+          className={cn(
+            "toolbar-button", 
+            style.textAlign === btn.align && "active",
+            !hasSelection && "pointer-events-none opacity-50"
+          )}
+          onClick={() => onStyleChange({ textAlign: btn.align })}
           title={`Align ${btn.align}`}
+          disabled={!hasSelection}
         >
           {btn.icon}
         </button>
