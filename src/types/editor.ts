@@ -28,6 +28,13 @@ export interface TextBlock {
   style: BlockStyle;
 }
 
+export interface DocumentOutlineItem {
+  id: string;
+  level: number;
+  text: string;
+  blockIndex: number;
+}
+
 export interface DocumentSettings {
   fontFamily: FontFamily;
   fontSize: number;
@@ -35,14 +42,21 @@ export interface DocumentSettings {
   textAlign: TextAlign;
   lineHeight: number;
   headingLevel: HeadingLevel;
+  showDocumentOutline: boolean;
+  showRuler: boolean;
 }
 
-export interface PageSettings {
+export interface PageLayout {
   marginTop: number;
   marginBottom: number;
   marginLeft: number;
   marginRight: number;
-  orientation: 'portrait' | 'landscape';
+  headerText: string;
+  footerText: string;
+  headerHeight: number;
+  footerHeight: number;
+  showHeader: boolean;
+  showFooter: boolean;
 }
 
 export const DEFAULT_BLOCK_STYLE: BlockStyle = {

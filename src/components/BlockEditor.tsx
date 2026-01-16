@@ -1,21 +1,18 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import { TextBlock, FONT_FAMILIES, BlockStyle } from '@/types/editor';
 import { cn } from '@/lib/utils';
 
 interface BlockEditorProps {
   blocks: TextBlock[];
-  selectedBlockId: string | null;
+  selectedBlockIds: string[];
   onBlocksChange: (blocks: TextBlock[]) => void;
-  onBlockSelect: (blockId: string | null) => void;
+  onBlockSelect: (blockIds: string[]) => void;
+  onBlocksReorder?: (sourceIndex: number, destinationIndex: number) => void;
 }
 
-export const BlockEditor = ({
-  blocks,
-  selectedBlockId,
-  onBlocksChange,
-  onBlockSelect,
-}: BlockEditorProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+const BlockEditor: React.FC<BlockEditorProps> = ({ blocks, selectedBlockIds, onBlocksChange, onBlockSelect, onBlocksReorder }) => {
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const getListPrefix = (block: TextBlock, index: number): string => {
     if (block.style.listType === 'unordered') {
@@ -44,14 +41,14 @@ export const BlockEditor = ({
     const block = blocks[blockIndex];
     const prefix = getListPrefix(block, blockIndex);
     
-    // Remove prefix from content if it exists
+    // Remove prefix from content (it's added by getDisplayContent)
     let cleanContent = newContent;
-    if (newContent.startsWith(prefix)) {
+    if (prefix && newContent.startsWith(prefix)) {
       cleanContent = newContent.substring(prefix.length);
     }
     
-    const updatedBlocks = blocks.map(block =>
-      block.id === blockId ? { ...block, content: cleanContent } : block
+    const updatedBlocks = blocks.map(b =>
+      b.id === blockId ? { ...b, content: cleanContent } : b
     );
     onBlocksChange(updatedBlocks);
   }, [blocks, onBlocksChange]);
@@ -186,6 +183,120 @@ export const BlockEditor = ({
     }
   }, [blocks, onBlocksChange, onBlockSelect]);
 
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Only handle shortcuts when not typing in a contentEditable
+      if (e.target instanceof HTMLElement && e.target.contentEditable === 'true') {
+        return;
+      }
+
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key) {
+          case 'a':
+            e.preventDefault();
+            onBlockSelect(blocks.map(b => b.id));
+            break;
+          case 'c':
+            // Copy selected blocks
+            if (selectedBlockIds.length > 0) {
+              const selectedBlocks = blocks.filter(b => selectedBlockIds.includes(b.id));
+              const copyData = JSON.stringify(selectedBlocks);
+              navigator.clipboard.writeText(copyData);
+            }
+            break;
+          case 'v':
+            // Paste blocks
+            e.preventDefault();
+            navigator.clipboard.readText().then(text => {
+              try {
+                const pastedBlocks: TextBlock[] = JSON.parse(text);
+                if (Array.isArray(pastedBlocks) && pastedBlocks.length > 0) {
+                  const newBlocks = pastedBlocks.map(block => ({
+                    ...block,
+                    id: crypto.randomUUID(),
+                  }));
+                  const insertIndex = selectedBlockIds.length > 0 
+                    ? blocks.findIndex(b => b.id === selectedBlockIds[0]) + 1
+                    : blocks.length;
+                  const updatedBlocks = [
+                    ...blocks.slice(0, insertIndex),
+                    ...newBlocks,
+                    ...blocks.slice(insertIndex),
+                  ];
+                  onBlocksChange(updatedBlocks);
+                  onBlockSelect(newBlocks.map(b => b.id));
+                }
+              } catch (error) {
+                // Not valid block data, ignore
+              }
+            });
+            break;
+        }
+      } else {
+        switch (e.key) {
+          case 'Escape':
+            onBlockSelect([]);
+            break;
+          case 'Delete':
+          case 'Backspace':
+            if (selectedBlockIds.length > 0 && selectedBlockIds.length < blocks.length) {
+              e.preventDefault();
+              const updatedBlocks = blocks.filter(b => !selectedBlockIds.includes(b.id));
+              onBlocksChange(updatedBlocks);
+              onBlockSelect([]);
+            }
+            break;
+          case 'ArrowUp':
+            if (selectedBlockIds.length === 1) {
+              const currentIndex = blocks.findIndex(b => b.id === selectedBlockIds[0]);
+              if (currentIndex > 0) {
+                onBlockSelect([blocks[currentIndex - 1].id]);
+              }
+            }
+            break;
+          case 'ArrowDown':
+            if (selectedBlockIds.length === 1) {
+              const currentIndex = blocks.findIndex(b => b.id === selectedBlockIds[0]);
+              if (currentIndex < blocks.length - 1) {
+                onBlockSelect([blocks[currentIndex + 1].id]);
+              }
+            }
+            break;
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [blocks, selectedBlockIds, onBlocksChange, onBlockSelect]);
+
+  // Drag and drop handlers
+  const handleDragStart = useCallback((e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverIndex(index);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex !== null && draggedIndex !== dropIndex && onBlocksReorder) {
+      onBlocksReorder(draggedIndex, dropIndex);
+    }
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  }, [draggedIndex, onBlocksReorder]);
+
   const getBlockStyles = (style: BlockStyle, isListItem: boolean = false) => {
     const fontClass = FONT_FAMILIES.find(f => f.value === style.fontFamily)?.className || 'font-sans';
     
@@ -222,27 +333,55 @@ export const BlockEditor = ({
           const displayContent = getDisplayContent(block, index);
           
           return (
-            <div
+            <div 
               key={block.id}
-              data-block-id={block.id}
-              contentEditable
-              suppressContentEditableWarning
+              draggable
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDrop={(e) => handleDrop(e, index)}
+              onDragEnd={handleDragEnd}
               className={cn(
-                "outline-none py-1 px-2 rounded transition-colors min-h-[1.5em]",
-                getBlockStyles(block.style, block.style.listType !== 'none'),
-                selectedBlockId === block.id && "bg-primary/5 ring-2 ring-primary/20"
+                "relative group",
+                draggedIndex === index && "opacity-50",
+                dragOverIndex === index && dragOverIndex !== draggedIndex && "border-t-2 border-primary"
               )}
-              style={{
-                fontSize: `${block.style.fontSize}px`,
-                color: block.style.textColor,
-                textAlign: block.style.textAlign,
-                lineHeight: block.style.lineHeight,
-              }}
-              onFocus={() => onBlockSelect(block.id)}
-              onInput={(e) => handleBlockChange(block.id, (e.target as HTMLElement).innerText, index)}
-              onKeyDown={(e) => handleKeyDown(e, block.id, index)}
-              dangerouslySetInnerHTML={{ __html: displayContent || '<br>' }}
-            />
+            >
+              {/* Drag handle */}
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-transparent group-hover:bg-primary/20 transition-colors cursor-move opacity-0 group-hover:opacity-100" />
+              
+              <div
+                data-block-id={block.id}
+                contentEditable
+                suppressContentEditableWarning
+                className={cn(
+                  "outline-none py-1 px-2 rounded transition-colors min-h-[1.5em] cursor-pointer pl-6",
+                  getBlockStyles(block.style, block.style.listType !== 'none'),
+                  selectedBlockIds.includes(block.id) && "bg-primary/5 ring-2 ring-primary/20"
+                )}
+                style={{
+                  fontSize: `${block.style.fontSize}px`,
+                  color: block.style.textColor,
+                  textAlign: block.style.textAlign,
+                  lineHeight: block.style.lineHeight,
+                }}
+                onFocus={() => onBlockSelect([block.id])}
+                onClick={(e) => {
+                  if (e.ctrlKey || e.metaKey) {
+                    // Multi-select with Ctrl/Cmd
+                    const newSelection = selectedBlockIds.includes(block.id)
+                      ? selectedBlockIds.filter(id => id !== block.id)
+                      : [...selectedBlockIds, block.id];
+                    onBlockSelect(newSelection);
+                  } else {
+                    // Single select
+                    onBlockSelect([block.id]);
+                  }
+                }}
+                onInput={(e) => handleBlockChange(block.id, (e.target as HTMLElement).innerText, index)}
+                onKeyDown={(e) => handleKeyDown(e, block.id, index)}
+                dangerouslySetInnerHTML={{ __html: displayContent || '<br>' }}
+              />
+            </div>
           );
         })}
         
@@ -269,3 +408,5 @@ export const BlockEditor = ({
     </div>
   );
 };
+
+export { BlockEditor };

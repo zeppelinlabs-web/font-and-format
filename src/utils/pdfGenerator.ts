@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { TextBlock, FontFamily } from '@/types/editor';
+import { TextBlock, FontFamily, PageLayout } from '@/types/editor';
 
 const FONT_MAP: Record<FontFamily, string> = {
   sans: 'helvetica',
@@ -7,7 +7,7 @@ const FONT_MAP: Record<FontFamily, string> = {
   mono: 'courier',
 };
 
-export const generatePDF = (blocks: TextBlock[]): void => {
+export const generatePDF = (blocks: TextBlock[], pageLayout: PageLayout): void => {
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -16,8 +16,13 @@ export const generatePDF = (blocks: TextBlock[]): void => {
 
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
-  const margin = 20;
-  const maxWidth = pageWidth - margin * 2;
+  const margin = {
+    top: pageLayout.marginTop + (pageLayout.showHeader ? pageLayout.headerHeight : 0),
+    bottom: pageLayout.marginBottom + (pageLayout.showFooter ? pageLayout.footerHeight : 0),
+    left: pageLayout.marginLeft,
+    right: pageLayout.marginRight,
+  };
+  const maxWidth = pageWidth - margin.left - margin.right;
 
   // Parse hex color to RGB
   const hexToRgb = (hex: string) => {
@@ -29,7 +34,47 @@ export const generatePDF = (blocks: TextBlock[]): void => {
     } : { r: 0, g: 0, b: 0 };
   };
 
-  let yPosition = margin;
+  let yPosition = margin.top;
+  let pageNumber = 1;
+
+  // Function to add header
+  const addHeader = () => {
+    if (pageLayout.showHeader && pageLayout.headerText) {
+      const headerY = pageLayout.marginTop;
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      pdf.setTextColor(100, 100, 100);
+
+      let headerText = pageLayout.headerText
+        .replace('{page}', pageNumber.toString())
+        .replace('{date}', new Date().toLocaleDateString())
+        .replace('{title}', 'Document');
+
+      pdf.text(headerText, margin.left, headerY + 5);
+    }
+  };
+
+  // Function to add footer
+  const addFooter = () => {
+    if (pageLayout.showFooter && pageLayout.footerText) {
+      const footerY = pageHeight - pageLayout.marginBottom;
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      pdf.setTextColor(100, 100, 100);
+
+      let footerText = pageLayout.footerText
+        .replace('{page}', pageNumber.toString())
+        .replace('{total}', '1') // We'll update this later if we add page counting
+        .replace('{date}', new Date().toLocaleDateString())
+        .replace('{title}', 'Document');
+
+      pdf.text(footerText, margin.left, footerY - 5);
+    }
+  };
+
+  // Add header and footer to first page
+  addHeader();
+  addFooter();
 
   blocks.forEach((block) => {
     if (!block.content.trim()) return;
@@ -68,29 +113,42 @@ export const generatePDF = (blocks: TextBlock[]): void => {
 
     const lineHeight = fontSize * style.lineHeight * 0.352778;
 
+    // Handle list items
+    let content = block.content;
+    if (style.listType === 'unordered') {
+      content = '• ' + content;
+    } else if (style.listType === 'ordered') {
+      // For ordered lists, we would need to track the numbering
+      // For now, just add a placeholder
+      content = '1. ' + content;
+    }
+
     // Wrap text
-    const lines = pdf.splitTextToSize(block.content, maxWidth);
+    const lines = pdf.splitTextToSize(content, maxWidth);
 
     lines.forEach((line: string) => {
       // Check if we need a new page
-      if (yPosition + lineHeight > pageHeight - margin) {
+      if (yPosition + lineHeight > pageHeight - margin.bottom) {
         pdf.addPage();
-        yPosition = margin;
+        pageNumber++;
+        yPosition = margin.top;
+        addHeader();
+        addFooter();
       }
 
       // Calculate x position based on alignment
-      let xPosition = margin;
+      let xPosition = margin.left;
       const textWidth = pdf.getTextWidth(line);
 
       switch (style.textAlign) {
         case 'center':
-          xPosition = (pageWidth - textWidth) / 2;
+          xPosition = margin.left + (maxWidth - textWidth) / 2;
           break;
         case 'right':
-          xPosition = pageWidth - margin - textWidth;
+          xPosition = margin.left + maxWidth - textWidth;
           break;
         default:
-          xPosition = margin;
+          xPosition = margin.left;
       }
 
       pdf.text(line, xPosition, yPosition);
