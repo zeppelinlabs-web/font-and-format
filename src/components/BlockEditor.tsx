@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
-import { TextBlock, FONT_FAMILIES, BlockStyle } from '@/types/editor';
+import { TextBlock, FONT_FAMILIES, BlockStyle, DEFAULT_BLOCK_STYLE } from '@/types/editor';
 import { cn } from '@/lib/utils';
 import { generateUUID } from '@/utils/uuid';
 
@@ -12,6 +12,7 @@ interface BlockEditorProps {
 }
 
 const BlockEditor: React.FC<BlockEditorProps> = ({ blocks, selectedBlockIds, onBlocksChange, onBlockSelect, onBlocksReorder }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
@@ -94,7 +95,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ blocks, selectedBlockIds, onB
           setTimeout(() => {
             const newBlockElement = document.querySelector(`[data-block-id="${newBlock.id}"]`) as HTMLElement;
             newBlockElement?.focus();
-            onBlockSelect(newBlock.id);
+            onBlockSelect([newBlock.id]);
           }, 0);
           return;
         }
@@ -139,7 +140,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ blocks, selectedBlockIds, onB
             selection?.removeAllRanges();
             selection?.addRange(range);
           }
-          onBlockSelect(newBlock.id);
+          onBlockSelect([newBlock.id]);
         }, 0);
       } else {
         // Fallback: create empty new block if no selection
@@ -159,7 +160,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ blocks, selectedBlockIds, onB
         setTimeout(() => {
           const newBlockElement = document.querySelector(`[data-block-id="${newBlock.id}"]`) as HTMLElement;
           newBlockElement?.focus();
-          onBlockSelect(newBlock.id);
+          onBlockSelect([newBlock.id]);
         }, 0);
       }
     }
@@ -178,7 +179,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ blocks, selectedBlockIds, onB
         setTimeout(() => {
           const prevBlockElement = document.querySelector(`[data-block-id="${updatedBlocks[prevIndex]?.id}"]`) as HTMLElement;
           prevBlockElement?.focus();
-          onBlockSelect(updatedBlocks[prevIndex]?.id || null);
+          onBlockSelect(updatedBlocks[prevIndex]?.id ? [updatedBlocks[prevIndex].id] : []);
         }, 0);
       }
     }
