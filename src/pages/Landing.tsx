@@ -204,14 +204,43 @@ const Landing = () => {
           <p className="text-white/70 mb-8 max-w-xl mx-auto">
             Start creating beautiful, professionally formatted documents right now. No signup, no hassle.
           </p>
-          <Button 
-            size="lg"
-            onClick={() => navigate('/editor')}
-            className="bg-[#3FBCBA] hover:bg-[#35a5a3] text-white text-lg px-10 py-6 gap-2"
-          >
-            <FileText className="w-5 h-5" />
-            Create Document
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <Button 
+              size="lg"
+              onClick={() => navigate('/editor')}
+              className="bg-[#3FBCBA] hover:bg-[#35a5a3] text-white text-lg px-10 py-6 gap-2"
+            >
+              <FileText className="w-5 h-5" />
+              Create Document
+            </Button>
+          </div>
+
+          {/* Support CTAs */}
+          <div className="border-t border-white/10 pt-10">
+            <p className="text-white/60 mb-6">Love Font and Format? Show your support!</p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <a
+                href="https://www.producthunt.com/posts/font-and-format"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#ff6154] hover:bg-[#e5574b] text-white rounded-lg font-semibold transition-colors"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M13.604 8.4h-3.405V12h3.405c.995 0 1.801-.806 1.801-1.801 0-.993-.806-1.799-1.801-1.799zM12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm1.604 14.4h-3.405V18H7.801V6h5.804c2.319 0 4.2 1.88 4.2 4.199 0 2.321-1.881 4.201-4.201 4.201z"/>
+                </svg>
+                Upvote on Product Hunt
+              </a>
+              <a
+                href="https://github.com/madnansultandotme/font-and-format"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#24292e] hover:bg-[#1a1e22] text-white rounded-lg font-semibold transition-colors"
+              >
+                <Github className="w-5 h-5" />
+                ⭐ Star on GitHub
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 
