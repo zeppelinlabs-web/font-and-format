@@ -17,9 +17,18 @@ export const BlockEditor = ({
 }: BlockEditorProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleBlockChange = useCallback((blockId: string, newContent: string) => {
+  const handleBlockChange = useCallback((blockId: string, newContent: string, blockIndex: number) => {
+    const block = blocks[blockIndex];
+    const prefix = getListPrefix(block, blockIndex);
+    
+    // Remove prefix from content if it exists
+    let cleanContent = newContent;
+    if (newContent.startsWith(prefix)) {
+      cleanContent = newContent.substring(prefix.length);
+    }
+    
     const updatedBlocks = blocks.map(block =>
-      block.id === blockId ? { ...block, content: newContent } : block
+      block.id === blockId ? { ...block, content: cleanContent } : block
     );
     onBlocksChange(updatedBlocks);
   }, [blocks, onBlocksChange]);
@@ -38,13 +47,16 @@ export const BlockEditor = ({
         preCaretRange.setEnd(range.endContainer, range.endOffset);
         const cursorPosition = preCaretRange.toString().length;
         
-        // Get the full text content
+        // Get the full text content (including prefix)
         const fullText = target.innerText;
-        const textBeforeCursor = fullText.substring(0, cursorPosition);
-        const textAfterCursor = fullText.substring(cursorPosition);
+        const prefix = getListPrefix(currentBlock, blockIndex);
+        
+        // Calculate actual content position (excluding prefix)
+        const contentStartPosition = prefix.length;
+        const relativeCursorPosition = Math.max(0, cursorPosition - contentStartPosition);
         
         // Check if current block is empty and is a list item - exit the list
-        if (fullText.trim() === '' && currentBlock.style.listType !== 'none') {
+        if (fullText.trim() === prefix.trim() && currentBlock.style.listType !== 'none') {
           const newBlock = {
             id: crypto.randomUUID(),
             content: '',
@@ -65,6 +77,10 @@ export const BlockEditor = ({
           }, 0);
           return;
         }
+        
+        // Split the content at cursor position
+        const textBeforeCursor = fullText.substring(contentStartPosition, contentStartPosition + relativeCursorPosition);
+        const textAfterCursor = fullText.substring(contentStartPosition + relativeCursorPosition);
         
         // Update current block with text before cursor
         const updatedCurrentBlock = {
@@ -93,11 +109,12 @@ export const BlockEditor = ({
           const newBlockElement = document.querySelector(`[data-block-id="${newBlock.id}"]`) as HTMLElement;
           if (newBlockElement) {
             newBlockElement.focus();
-            // Position cursor at the beginning of the new block
+            // Position cursor at the beginning of the content (after prefix)
             const range = document.createRange();
             const selection = window.getSelection();
-            range.selectNodeContents(newBlockElement);
-            range.collapse(true);
+            const prefix = getListPrefix(newBlock, blockIndex + 1);
+            range.setStart(newBlockElement.firstChild || newBlockElement, prefix.length);
+            range.setEnd(newBlockElement.firstChild || newBlockElement, prefix.length);
             selection?.removeAllRanges();
             selection?.addRange(range);
           }
@@ -146,30 +163,27 @@ export const BlockEditor = ({
     }
   }, [blocks, onBlocksChange, onBlockSelect]);
 
-  const getBlockStyles = (style: BlockStyle, isListItem: boolean = false) => {
-    const fontClass = FONT_FAMILIES.find(f => f.value === style.fontFamily)?.className || 'font-sans';
-    
-    let headingClass = '';
-    switch (style.headingLevel) {
-      case 'h1':
-        headingClass = 'text-4xl font-bold';
-        break;
-      case 'h2':
-        headingClass = 'text-2xl font-semibold';
-        break;
-      case 'h3':
-        headingClass = 'text-xl font-medium';
-        break;
+  const getListPrefix = (block: TextBlock, index: number): string => {
+    if (block.style.listType === 'unordered') {
+      return '• ';
+    } else if (block.style.listType === 'ordered') {
+      // Count preceding ordered list items
+      let count = 1;
+      for (let i = index - 1; i >= 0; i--) {
+        if (blocks[i].style.listType === 'ordered') {
+          count++;
+        } else {
+          break;
+        }
+      }
+      return `${count}. `;
     }
+    return '';
+  };
 
-    return cn(
-      fontClass,
-      headingClass,
-      style.bold && 'font-bold',
-      style.italic && 'italic',
-      style.underline && 'underline',
-      isListItem && 'ml-6'
-    );
+  const getDisplayContent = (block: TextBlock, index: number): string => {
+    const prefix = getListPrefix(block, index);
+    return prefix + (block.content || '');
   };
 
   return (
@@ -179,57 +193,30 @@ export const BlockEditor = ({
     >
       <div className="editor-content min-h-[600px]">
         {blocks.map((block, index) => {
-          const isListItem = block.style.listType !== 'none';
-          const prevBlock = blocks[index - 1];
-          const nextBlock = blocks[index + 1];
+          const displayContent = getDisplayContent(block, index);
           
-          // Check if this is the start of a new list or continuation
-          const isListStart = isListItem && (!prevBlock || prevBlock.style.listType !== block.style.listType);
-          const isListEnd = isListItem && (!nextBlock || nextBlock.style.listType !== block.style.listType);
-          
-          // Count items in current list for ordered lists
-          let listItemNumber = 1;
-          if (block.style.listType === 'ordered') {
-            for (let i = index - 1; i >= 0; i--) {
-              if (blocks[i].style.listType === 'ordered') {
-                listItemNumber++;
-              } else {
-                break;
-              }
-            }
-          }
-
           return (
-            <div key={block.id} className="relative">
-              {isListItem && (
-                <div 
-                  className="absolute left-0 top-1 w-6 flex items-center justify-center text-muted-foreground select-none"
-                  style={{ fontSize: `${block.style.fontSize}px` }}
-                >
-                  {block.style.listType === 'unordered' ? '•' : `${listItemNumber}.`}
-                </div>
+            <div
+              key={block.id}
+              data-block-id={block.id}
+              contentEditable
+              suppressContentEditableWarning
+              className={cn(
+                "outline-none py-1 px-2 rounded transition-colors min-h-[1.5em]",
+                getBlockStyles(block.style, block.style.listType !== 'none'),
+                selectedBlockId === block.id && "bg-primary/5 ring-2 ring-primary/20"
               )}
-              <div
-                data-block-id={block.id}
-                contentEditable
-                suppressContentEditableWarning
-                className={cn(
-                  "outline-none py-1 px-2 rounded transition-colors min-h-[1.5em]",
-                  getBlockStyles(block.style, isListItem),
-                  selectedBlockId === block.id && "bg-primary/5 ring-2 ring-primary/20"
-                )}
-                style={{
-                  fontSize: `${block.style.fontSize}px`,
-                  color: block.style.textColor,
-                  textAlign: block.style.textAlign,
-                  lineHeight: block.style.lineHeight,
-                }}
-                onFocus={() => onBlockSelect(block.id)}
-                onInput={(e) => handleBlockChange(block.id, (e.target as HTMLElement).innerText)}
-                onKeyDown={(e) => handleKeyDown(e, block.id, index)}
-                dangerouslySetInnerHTML={{ __html: block.content || '<br>' }}
-              />
-            </div>
+              style={{
+                fontSize: `${block.style.fontSize}px`,
+                color: block.style.textColor,
+                textAlign: block.style.textAlign,
+                lineHeight: block.style.lineHeight,
+              }}
+              onFocus={() => onBlockSelect(block.id)}
+              onInput={(e) => handleBlockChange(block.id, (e.target as HTMLElement).innerText, index)}
+              onKeyDown={(e) => handleKeyDown(e, block.id, index)}
+              dangerouslySetInnerHTML={{ __html: displayContent || '<br>' }}
+            />
           );
         })}
         
