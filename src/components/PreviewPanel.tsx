@@ -8,6 +8,24 @@ interface PreviewPanelProps {
 
 export const PreviewPanel = forwardRef<HTMLDivElement, PreviewPanelProps>(
   ({ blocks }, ref) => {
+    const getListPrefix = (block: TextBlock, index: number, allBlocks: TextBlock[]): string => {
+      if (block.style.listType === 'unordered') {
+        return '• ';
+      } else if (block.style.listType === 'ordered') {
+        // Count preceding ordered list items
+        let count = 1;
+        for (let i = index - 1; i >= 0; i--) {
+          if (allBlocks[i].style.listType === 'ordered') {
+            count++;
+          } else {
+            break;
+          }
+        }
+        return `${count}. `;
+      }
+      return '';
+    };
+
     const getBlockStyles = (block: TextBlock) => {
       const fontClass = FONT_FAMILIES.find(f => f.value === block.style.fontFamily)?.className || 'font-sans';
       
@@ -31,7 +49,8 @@ export const PreviewPanel = forwardRef<HTMLDivElement, PreviewPanelProps>(
         headingClass,
         block.style.bold && 'font-bold',
         block.style.italic && 'italic',
-        block.style.underline && 'underline'
+        block.style.underline && 'underline',
+        block.style.listType !== 'none' && 'ml-4'
       );
     };
 
@@ -45,8 +64,11 @@ export const PreviewPanel = forwardRef<HTMLDivElement, PreviewPanelProps>(
         >
           <div className="h-full">
             {nonEmptyBlocks.length > 0 ? (
-              nonEmptyBlocks.map((block) => {
+              nonEmptyBlocks.map((block, index) => {
                 const Tag = block.style.headingLevel === 'p' ? 'p' : block.style.headingLevel;
+                const prefix = getListPrefix(block, index, nonEmptyBlocks);
+                const displayContent = prefix + block.content;
+                
                 return (
                   <Tag 
                     key={block.id}
@@ -58,7 +80,7 @@ export const PreviewPanel = forwardRef<HTMLDivElement, PreviewPanelProps>(
                       lineHeight: block.style.lineHeight,
                     }}
                   >
-                    {block.content}
+                    {displayContent}
                   </Tag>
                 );
               })
