@@ -1,3 +1,5 @@
+import { generateUUID } from '@/utils/uuid';
+
 export type HeadingLevel = 'p' | 'h1' | 'h2' | 'h3';
 export type TextAlign = 'left' | 'center' | 'right' | 'justify';
 export type FontFamily = 'sans' | 'serif' | 'mono';
@@ -96,7 +98,7 @@ export const TEXT_COLORS = [
 ];
 
 export const createBlock = (content: string = '', style: Partial<BlockStyle> = {}): TextBlock => ({
-  id: crypto.randomUUID(),
+  id: generateUUID(),
   content,
   style: { ...DEFAULT_BLOCK_STYLE, ...style },
 });

@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { TextBlock, FONT_FAMILIES, BlockStyle } from '@/types/editor';
 import { cn } from '@/lib/utils';
+import { generateUUID } from '@/utils/uuid';
 
 interface BlockEditorProps {
   blocks: TextBlock[];
@@ -78,7 +79,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ blocks, selectedBlockIds, onB
         // Check if current block is empty and is a list item - exit the list
         if (fullText.trim() === prefix.trim() && currentBlock.style.listType !== 'none') {
           const newBlock = {
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             content: '',
             style: { ...currentBlock.style, listType: 'none' as const },
           };
@@ -110,7 +111,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ blocks, selectedBlockIds, onB
         
         // Create new block with text after cursor (same style for lists, normal for others)
         const newBlock = {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           content: textAfterCursor,
           style: { ...currentBlock.style },
         };
@@ -143,7 +144,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ blocks, selectedBlockIds, onB
       } else {
         // Fallback: create empty new block if no selection
         const newBlock = {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           content: '',
           style: { ...currentBlock.style },
         };
@@ -214,7 +215,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ blocks, selectedBlockIds, onB
                 if (Array.isArray(pastedBlocks) && pastedBlocks.length > 0) {
                   const newBlocks = pastedBlocks.map(block => ({
                     ...block,
-                    id: crypto.randomUUID(),
+                    id: generateUUID(),
                   }));
                   const insertIndex = selectedBlockIds.length > 0 
                     ? blocks.findIndex(b => b.id === selectedBlockIds[0]) + 1
@@ -390,7 +391,7 @@ const BlockEditor: React.FC<BlockEditorProps> = ({ blocks, selectedBlockIds, onB
             className="text-muted-foreground italic cursor-text"
             onClick={() => {
               const newBlock = {
-                id: crypto.randomUUID(),
+                id: generateUUID(),
                 content: '',
                 style: { ...DEFAULT_BLOCK_STYLE },
               };
