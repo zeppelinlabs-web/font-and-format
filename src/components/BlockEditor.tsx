@@ -13,6 +13,8 @@ export interface FormatState {
   insertUnorderedList: boolean;
   insertOrderedList: boolean;
   heading: 'p' | 'h1' | 'h2' | 'h3';
+  blockquote: boolean;
+  codeBlock: boolean;
 }
 
 interface BlockEditorProps {
@@ -53,22 +55,25 @@ const BlockEditor = forwardRef<BlockEditorRef, BlockEditorProps>(({
       insertUnorderedList: document.queryCommandState('insertUnorderedList'),
       insertOrderedList: document.queryCommandState('insertOrderedList'),
       heading: 'p',
+      blockquote: false,
+      codeBlock: false,
     };
 
-    // Check heading level
+    // Check heading level, blockquote, and code block
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0) {
       let node: Node | null = selection.anchorNode;
       while (node && node !== editorRef.current) {
         if (node.nodeName === 'H1') {
           state.heading = 'h1';
-          break;
         } else if (node.nodeName === 'H2') {
           state.heading = 'h2';
-          break;
         } else if (node.nodeName === 'H3') {
           state.heading = 'h3';
-          break;
+        } else if (node.nodeName === 'BLOCKQUOTE') {
+          state.blockquote = true;
+        } else if (node.nodeName === 'PRE') {
+          state.codeBlock = true;
         }
         node = node.parentNode;
       }
@@ -235,6 +240,23 @@ const BlockEditor = forwardRef<BlockEditorRef, BlockEditorProps>(({
     }
   }, [onContentChange]);
 
+  // Check if cursor is in a special block (heading, blockquote, pre)
+  const getSpecialBlockContext = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return null;
+    
+    let node: Node | null = selection.anchorNode;
+    while (node && node !== editorRef.current) {
+      const nodeName = node.nodeName;
+      if (nodeName === 'H1' || nodeName === 'H2' || nodeName === 'H3' || 
+          nodeName === 'BLOCKQUOTE' || nodeName === 'PRE') {
+        return node as HTMLElement;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }, []);
+
   // Check if cursor is in a list item
   const getListContext = useCallback(() => {
     const selection = window.getSelection();
@@ -288,6 +310,122 @@ const BlockEditor = forwardRef<BlockEditorRef, BlockEditorProps>(({
     }
 
     const listContext = getListContext();
+    const specialBlock = getSpecialBlockContext();
+
+    // Handle Enter in special blocks (headings, blockquote, pre) - create a new paragraph
+    if (e.key === 'Enter' && !e.shiftKey && specialBlock) {
+      const blockType = specialBlock.nodeName;
+      const isHeading = blockType === 'H1' || blockType === 'H2' || blockType === 'H3';
+      const isBlockquote = blockType === 'BLOCKQUOTE';
+      const isPre = blockType === 'PRE';
+      
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        
+        // For headings and blockquotes: always exit to paragraph on Enter
+        if (isHeading || isBlockquote) {
+          e.preventDefault();
+          
+          // Get any text after the cursor
+          const afterRange = document.createRange();
+          afterRange.setStart(range.endContainer, range.endOffset);
+          afterRange.setEndAfter(specialBlock);
+          const afterContent = afterRange.extractContents();
+          
+          // Create a new paragraph
+          const p = document.createElement('p');
+          if (afterContent.textContent?.trim()) {
+            p.appendChild(afterContent);
+          } else {
+            p.innerHTML = '<br>';
+          }
+          
+          // Insert the paragraph after the block
+          if (specialBlock.nextSibling) {
+            specialBlock.parentNode?.insertBefore(p, specialBlock.nextSibling);
+          } else {
+            specialBlock.parentNode?.appendChild(p);
+          }
+          
+          // If the original block is now empty, remove it
+          if (!specialBlock.textContent?.trim()) {
+            specialBlock.remove();
+          }
+          
+          // Move cursor to the start of the new paragraph
+          const newRange = document.createRange();
+          newRange.setStart(p, 0);
+          newRange.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(newRange);
+          
+          // Trigger content change
+          if (editorRef.current) {
+            isInternalChange.current = true;
+            onContentChange(editorRef.current.innerHTML);
+            if (onFormatStateChange) {
+              onFormatStateChange(getFormatState());
+            }
+            setTimeout(() => {
+              isInternalChange.current = false;
+            }, 0);
+          }
+          return;
+        }
+        
+        // For pre/code blocks: exit on Enter at empty line
+        if (isPre) {
+          const currentText = range.startContainer.textContent || '';
+          const lines = currentText.split('\n');
+          const isLastLineEmpty = lines.length > 0 && lines[lines.length - 1].trim() === '';
+          const isAtEnd = range.endOffset === currentText.length;
+          
+          if (isAtEnd && isLastLineEmpty) {
+            e.preventDefault();
+            
+            // Remove trailing newline
+            if (specialBlock.lastChild && specialBlock.lastChild.nodeType === Node.TEXT_NODE) {
+              const text = specialBlock.lastChild.textContent || '';
+              specialBlock.lastChild.textContent = text.replace(/\n$/, '');
+            }
+            
+            // Create a new paragraph
+            const p = document.createElement('p');
+            p.innerHTML = '<br>';
+            
+            if (specialBlock.nextSibling) {
+              specialBlock.parentNode?.insertBefore(p, specialBlock.nextSibling);
+            } else {
+              specialBlock.parentNode?.appendChild(p);
+            }
+            
+            // Move cursor to the new paragraph
+            const newRange = document.createRange();
+            newRange.setStart(p, 0);
+            newRange.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+            
+            // Trigger content change
+            if (editorRef.current) {
+              isInternalChange.current = true;
+              onContentChange(editorRef.current.innerHTML);
+              if (onFormatStateChange) {
+                onFormatStateChange(getFormatState());
+              }
+              setTimeout(() => {
+                isInternalChange.current = false;
+              }, 0);
+            }
+            return;
+          }
+          
+          // Allow normal Enter within pre
+          return;
+        }
+      }
+    }
 
     // Handle Tab for list indentation
     if (e.key === 'Tab' && listContext?.listItem) {

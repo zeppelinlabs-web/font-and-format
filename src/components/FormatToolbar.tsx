@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { 
   Bold, 
   Italic, 
@@ -39,6 +39,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { FormatState } from './BlockEditor';
 
@@ -78,6 +88,9 @@ export const FormatToolbar = ({
   ];
   
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkText, setLinkText] = useState('');
 
   // Prevent focus loss when clicking toolbar buttons
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -95,11 +108,18 @@ export const FormatToolbar = ({
     }
   };
 
+  const handleOpenLinkDialog = () => {
+    setLinkUrl('');
+    setLinkText('');
+    setLinkDialogOpen(true);
+  };
+
   const handleInsertLink = () => {
-    const url = prompt('Enter URL:');
-    if (url) {
-      const text = prompt('Enter link text (leave empty to use URL):') || url;
-      onInsertLink(url, text);
+    if (linkUrl) {
+      onInsertLink(linkUrl, linkText || linkUrl);
+      setLinkDialogOpen(false);
+      setLinkUrl('');
+      setLinkText('');
     }
   };
 
@@ -376,20 +396,20 @@ export const FormatToolbar = ({
 
       {/* Block Quote */}
       <button
-        className="toolbar-button"
+        className={cn("toolbar-button", formatState.blockquote && "bg-primary/20 text-primary")}
         onMouseDown={handleMouseDown}
         onClick={() => onFormat('formatBlock', 'blockquote')}
-        title="Block Quote"
+        title={formatState.blockquote ? "Remove Block Quote" : "Block Quote"}
       >
         <Quote className="w-4 h-4" />
       </button>
 
       {/* Code Block */}
       <button
-        className="toolbar-button"
+        className={cn("toolbar-button", formatState.codeBlock && "bg-primary/20 text-primary")}
         onMouseDown={handleMouseDown}
         onClick={() => onFormat('formatBlock', 'pre')}
-        title="Code Block"
+        title={formatState.codeBlock ? "Remove Code Block" : "Code Block"}
       >
         <Code className="w-4 h-4" />
       </button>
@@ -420,11 +440,62 @@ export const FormatToolbar = ({
       <button
         className="toolbar-button"
         onMouseDown={handleMouseDown}
-        onClick={handleInsertLink}
+        onClick={handleOpenLinkDialog}
         title="Insert Link"
       >
         <Link className="w-4 h-4" />
       </button>
+
+      {/* Link Dialog */}
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Insert Link</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="link-url">URL</Label>
+              <Input
+                id="link-url"
+                type="url"
+                placeholder="https://example.com"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleInsertLink();
+                  }
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="link-text">Link Text (optional)</Label>
+              <Input
+                id="link-text"
+                type="text"
+                placeholder="Display text"
+                value={linkText}
+                onChange={(e) => setLinkText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleInsertLink();
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLinkDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleInsertLink} disabled={!linkUrl}>
+              Insert
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
