@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { Header } from '@/components/Header';
 import { FormatToolbar } from '@/components/FormatToolbar';
-import { BlockEditor, BlockEditorRef } from '@/components/BlockEditor';
+import { BlockEditor, BlockEditorRef, FormatState } from '@/components/BlockEditor';
 import { PreviewPanel } from '@/components/PreviewPanel';
 import { PageLayoutPanel } from '@/components/PageLayoutPanel';
 import { generatePDF } from '@/utils/pdfGenerator';
@@ -10,10 +10,25 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Settings, PanelLeftClose, PanelLeft } from 'lucide-react';
 
+const defaultFormatState: FormatState = {
+  bold: false,
+  italic: false,
+  underline: false,
+  strikeThrough: false,
+  justifyLeft: true,
+  justifyCenter: false,
+  justifyRight: false,
+  justifyFull: false,
+  insertUnorderedList: false,
+  insertOrderedList: false,
+  heading: 'p',
+};
+
 const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [content, setContent] = useState('<p><br></p>');
   const [hasSelection, setHasSelection] = useState(false);
+  const [formatState, setFormatState] = useState<FormatState>(defaultFormatState);
   const [pageLayout, setPageLayout] = useState<PageLayout>({
     marginTop: 20,
     marginBottom: 20,
@@ -108,6 +123,7 @@ const Index = () => {
             <FormatToolbar
               onFormat={handleFormat}
               hasSelection={hasSelection}
+              formatState={formatState}
             />
 
             <div className="flex-1 flex gap-6 min-h-0">
@@ -116,6 +132,7 @@ const Index = () => {
                 content={content}
                 onContentChange={setContent}
                 onSelectionChange={setHasSelection}
+                onFormatStateChange={setFormatState}
               />
               <PreviewPanel
                 content={content}

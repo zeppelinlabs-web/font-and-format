@@ -23,15 +23,18 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { FormatState } from './BlockEditor';
 
 interface FormatToolbarProps {
   onFormat: (command: string, value?: string) => void;
   hasSelection: boolean;
+  formatState: FormatState;
 }
 
 export const FormatToolbar = ({
   onFormat,
   hasSelection,
+  formatState,
 }: FormatToolbarProps) => {
   const fontSizes = ['1', '2', '3', '4', '5', '6', '7'];
 
@@ -77,34 +80,34 @@ export const FormatToolbar = ({
 
       {/* Text Style */}
       <button
-        className="toolbar-button"
+        className={cn("toolbar-button", formatState.bold && "bg-primary/20 text-primary")}
         onMouseDown={handleMouseDown}
         onClick={() => onFormat('bold')}
-        title="Bold (Ctrl+B)"
+        title={formatState.bold ? "Remove Bold (Ctrl+B)" : "Bold (Ctrl+B)"}
       >
         <Bold className="w-4 h-4" />
       </button>
       <button
-        className="toolbar-button"
+        className={cn("toolbar-button", formatState.italic && "bg-primary/20 text-primary")}
         onMouseDown={handleMouseDown}
         onClick={() => onFormat('italic')}
-        title="Italic (Ctrl+I)"
+        title={formatState.italic ? "Remove Italic (Ctrl+I)" : "Italic (Ctrl+I)"}
       >
         <Italic className="w-4 h-4" />
       </button>
       <button
-        className="toolbar-button"
+        className={cn("toolbar-button", formatState.underline && "bg-primary/20 text-primary")}
         onMouseDown={handleMouseDown}
         onClick={() => onFormat('underline')}
-        title="Underline (Ctrl+U)"
+        title={formatState.underline ? "Remove Underline (Ctrl+U)" : "Underline (Ctrl+U)"}
       >
         <Underline className="w-4 h-4" />
       </button>
       <button
-        className="toolbar-button"
+        className={cn("toolbar-button", formatState.strikeThrough && "bg-primary/20 text-primary")}
         onMouseDown={handleMouseDown}
         onClick={() => onFormat('strikeThrough')}
-        title="Strikethrough"
+        title={formatState.strikeThrough ? "Remove Strikethrough" : "Strikethrough"}
       >
         <Strikethrough className="w-4 h-4" />
       </button>
@@ -113,7 +116,7 @@ export const FormatToolbar = ({
 
       {/* Headings */}
       <button
-        className="toolbar-button"
+        className={cn("toolbar-button", formatState.heading === 'p' && "bg-primary/20 text-primary")}
         onMouseDown={handleMouseDown}
         onClick={() => onFormat('formatBlock', 'p')}
         title="Paragraph"
@@ -121,7 +124,7 @@ export const FormatToolbar = ({
         <Type className="w-4 h-4" />
       </button>
       <button
-        className="toolbar-button"
+        className={cn("toolbar-button", formatState.heading === 'h1' && "bg-primary/20 text-primary")}
         onMouseDown={handleMouseDown}
         onClick={() => onFormat('formatBlock', 'h1')}
         title="Heading 1"
@@ -129,7 +132,7 @@ export const FormatToolbar = ({
         <Heading1 className="w-4 h-4" />
       </button>
       <button
-        className="toolbar-button"
+        className={cn("toolbar-button", formatState.heading === 'h2' && "bg-primary/20 text-primary")}
         onMouseDown={handleMouseDown}
         onClick={() => onFormat('formatBlock', 'h2')}
         title="Heading 2"
@@ -137,7 +140,7 @@ export const FormatToolbar = ({
         <Heading2 className="w-4 h-4" />
       </button>
       <button
-        className="toolbar-button"
+        className={cn("toolbar-button", formatState.heading === 'h3' && "bg-primary/20 text-primary")}
         onMouseDown={handleMouseDown}
         onClick={() => onFormat('formatBlock', 'h3')}
         title="Heading 3"
@@ -149,7 +152,7 @@ export const FormatToolbar = ({
 
       {/* Alignment */}
       <button
-        className="toolbar-button"
+        className={cn("toolbar-button", formatState.justifyLeft && "bg-primary/20 text-primary")}
         onMouseDown={handleMouseDown}
         onClick={() => onFormat('justifyLeft')}
         title="Align Left"
@@ -157,7 +160,7 @@ export const FormatToolbar = ({
         <AlignLeft className="w-4 h-4" />
       </button>
       <button
-        className="toolbar-button"
+        className={cn("toolbar-button", formatState.justifyCenter && "bg-primary/20 text-primary")}
         onMouseDown={handleMouseDown}
         onClick={() => onFormat('justifyCenter')}
         title="Align Center"
@@ -165,7 +168,7 @@ export const FormatToolbar = ({
         <AlignCenter className="w-4 h-4" />
       </button>
       <button
-        className="toolbar-button"
+        className={cn("toolbar-button", formatState.justifyRight && "bg-primary/20 text-primary")}
         onMouseDown={handleMouseDown}
         onClick={() => onFormat('justifyRight')}
         title="Align Right"
@@ -173,7 +176,7 @@ export const FormatToolbar = ({
         <AlignRight className="w-4 h-4" />
       </button>
       <button
-        className="toolbar-button"
+        className={cn("toolbar-button", formatState.justifyFull && "bg-primary/20 text-primary")}
         onMouseDown={handleMouseDown}
         onClick={() => onFormat('justifyFull')}
         title="Justify"
@@ -185,18 +188,18 @@ export const FormatToolbar = ({
 
       {/* Lists */}
       <button
-        className="toolbar-button"
+        className={cn("toolbar-button", formatState.insertUnorderedList && "bg-primary/20 text-primary")}
         onMouseDown={handleMouseDown}
         onClick={() => onFormat('insertUnorderedList')}
-        title="Bullet List"
+        title={formatState.insertUnorderedList ? "Remove Bullet List" : "Bullet List"}
       >
         <List className="w-4 h-4" />
       </button>
       <button
-        className="toolbar-button"
+        className={cn("toolbar-button", formatState.insertOrderedList && "bg-primary/20 text-primary")}
         onMouseDown={handleMouseDown}
         onClick={() => onFormat('insertOrderedList')}
-        title="Numbered List"
+        title={formatState.insertOrderedList ? "Remove Numbered List" : "Numbered List"}
       >
         <ListOrdered className="w-4 h-4" />
       </button>
