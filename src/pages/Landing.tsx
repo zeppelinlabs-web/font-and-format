@@ -108,7 +108,7 @@ const Landing = () => {
             size="lg"
             variant="outline"
             onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-            className="border-white/30 text-white hover:bg-white/10 text-lg px-8 py-6"
+            className="border-white/30 text-white hover:bg-white/10 bg-transparent text-lg px-8 py-6"
           >
             Learn More
           </Button>
