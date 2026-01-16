@@ -10,7 +10,6 @@ import {
   Palette,
   CheckCircle,
   ArrowRight,
-  Sparkles,
   Github,
   Mail,
   ExternalLink
@@ -47,6 +46,18 @@ const Landing = () => {
             <span className="text-xl font-semibold text-white">Font and Format</span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
+            <a 
+              href="https://www.producthunt.com/products/font-and-format?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-font-and-format" 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              <img 
+                alt="Font and Format - Effortless Documents, Instant PDFs | Product Hunt" 
+                width="250" 
+                height="54" 
+                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1063859&theme=light&t=1768584413372"
+              />
+            </a>
             <button 
               onClick={() => navigate('/')}
               className="text-white transition-colors"
@@ -261,7 +272,7 @@ const Landing = () => {
                   </svg>
                 </a>
                 <a 
-                  href="https://github.com/nxgntools/font-and-format"
+                  href="https://github.com/madnansultandotme/font-and-format"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 transition-colors"
@@ -288,6 +299,56 @@ const Landing = () => {
               </div>
             </div>
           </div>
+
+          {/* Product Hunt Card */}
+          <div className="flex justify-center mb-8">
+            <div className="bg-white rounded-xl p-5 max-w-[500px] shadow-lg">
+              <div className="flex items-center gap-3 mb-3">
+                <img 
+                  alt="Font and Format" 
+                  src="https://ph-files.imgix.net/083b1099-c33e-4291-8568-758d99de28ed.png?auto=format&fit=crop&w=80&h=80" 
+                  className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-semibold text-gray-900 truncate">Font and Format</h3>
+                  <p className="text-sm text-gray-500 mt-1 line-clamp-2">Effortless Documents, Instant PDFs</p>
+                </div>
+              </div>
+              <a 
+                href="https://www.producthunt.com/products/font-and-format?embed=true&utm_source=embed&utm_medium=post_embed" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 mt-3 px-4 py-2 bg-[#ff6154] text-white rounded-lg text-sm font-semibold hover:bg-[#e5574b] transition-colors"
+              >
+                Check it out on Product Hunt →
+              </a>
+            </div>
+          </div>
+
+          {/* Powered By Section */}
+          <div className="flex justify-center gap-6 mb-8">
+            <a 
+              href="https://github.com/madnansultandotme/font-and-format"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm"
+            >
+              <Github className="w-4 h-4" />
+              Open Source on GitHub
+            </a>
+            <a 
+              href="https://font-and-format.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 76 65" fill="currentColor">
+                <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" />
+              </svg>
+              Deployed on Vercel
+            </a>
+          </div>
+
           <div className="border-t border-white/10 pt-8">
             <p className="text-white/50 text-sm text-center">
               © {new Date().getFullYear()} Font and Format. Free online document editor. All rights reserved.
