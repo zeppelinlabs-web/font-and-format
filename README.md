@@ -1,53 +1,154 @@
-# Welcome to your Lovable project
+# Font and Format
 
-## Project info
+A modern web-based text editor that allows you to create, format, and export beautifully styled documents. Perfect for creating formatted text with various fonts, sizes, and styles, then exporting to PDF.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Features
 
-## How can I edit this code?
+- **Block-Based Editing**: Create and edit text in individual blocks for better organization
+- **Rich Formatting Toolbar**: Apply fonts, sizes, colors, alignment, and more
+- **Live Preview**: See your formatted text in real-time
+- **File Upload**: Import text files to edit
+- **PDF Export**: Generate professional PDFs from your formatted content
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- **Frontend**: React 18 with TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS with Shadcn/ui components
+- **PDF Generation**: jsPDF and html2canvas
+- **State Management**: React hooks
+- **Routing**: React Router
+- **Icons**: Lucide React
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js (version 18 or higher)
+- npm or bun
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+1. Clone the repository:
+```bash
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+cd font-and-format
 ```
 
-**Edit a file directly in GitHub**
+2. Install dependencies:
+```bash
+npm install
+# or
+bun install
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+3. Start the development server:
+```bash
+npm run dev
+# or
+bun run dev
+```
 
-**Use GitHub Codespaces**
+4. Open your browser and navigate to `http://localhost:5173`
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
+### Building for Production
+
+```bash
+npm run build
+# or
+bun run build
+```
+
+### Running Tests
+
+```bash
+npm run test
+# or
+bun run test
+```
+
+## Usage
+
+1. **Create Content**: Start typing in the editor to create text blocks
+2. **Format Text**: Select a block and use the toolbar to apply formatting
+3. **Preview**: See your changes in the live preview panel
+4. **Upload Files**: Use the file upload feature to import existing text
+5. **Export**: Generate a PDF of your formatted document
+
+## Project Structure
+
+```
+src/
+├── components/          # Reusable UI components
+│   ├── ui/             # Shadcn/ui components
+│   ├── BlockEditor.tsx # Main text editor
+│   ├── FormatToolbar.tsx # Formatting controls
+│   ├── PreviewPanel.tsx # Live preview
+│   └── ...
+├── pages/              # Page components
+├── hooks/              # Custom React hooks
+├── lib/                # Utility libraries
+├── types/              # TypeScript type definitions
+└── utils/              # Helper functions
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests: `npm run test`
+5. Submit a pull request
+
+## Web Analytics
+
+The application is deployed at [font-and-format.vercel.app](https://font-and-format.vercel.app) and uses Vercel Analytics to track visitors and page views.
+
+### Setting up Vercel Analytics
+
+To start counting visitors and page views, follow these steps:
+
+#### 1. Install the package
+
+Install `@vercel/analytics` in your project:
+
+```bash
+npm i @vercel/analytics
+```
+
+#### 2. Add the React component
+
+Import and use the `<Analytics/>` React component in your app's main component (e.g., `src/main.tsx` or `src/App.tsx`):
+
+```tsx
+import { Analytics } from "@vercel/analytics/react"
+```
+
+Then add it to your app:
+
+```tsx
+export default function App() {
+  return (
+    <>
+      {/* Your app content */}
+      <Analytics />
+    </>
+  )
+}
+```
+
+For full examples and further reference, please refer to the [Vercel Analytics documentation](https://vercel.com/docs/analytics).
+
+#### 3. Deploy & Visit your Site
+
+Deploy your changes and visit the deployment to start collecting page views.
+
+If you don't see data after 30 seconds, please check for content blockers and try navigating between pages on your site.
+
+## License
+
+This project is private and proprietary.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
 ## What technologies are used for this project?
