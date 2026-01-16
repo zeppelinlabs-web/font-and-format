@@ -17,6 +17,29 @@ export const BlockEditor = ({
 }: BlockEditorProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const getListPrefix = (block: TextBlock, index: number): string => {
+    if (block.style.listType === 'unordered') {
+      return '• ';
+    } else if (block.style.listType === 'ordered') {
+      // Count preceding ordered list items
+      let count = 1;
+      for (let i = index - 1; i >= 0; i--) {
+        if (blocks[i].style.listType === 'ordered') {
+          count++;
+        } else {
+          break;
+        }
+      }
+      return `${count}. `;
+    }
+    return '';
+  };
+
+  const getDisplayContent = (block: TextBlock, index: number): string => {
+    const prefix = getListPrefix(block, index);
+    return prefix + (block.content || '');
+  };
+
   const handleBlockChange = useCallback((blockId: string, newContent: string, blockIndex: number) => {
     const block = blocks[blockIndex];
     const prefix = getListPrefix(block, blockIndex);
@@ -163,27 +186,30 @@ export const BlockEditor = ({
     }
   }, [blocks, onBlocksChange, onBlockSelect]);
 
-  const getListPrefix = (block: TextBlock, index: number): string => {
-    if (block.style.listType === 'unordered') {
-      return '• ';
-    } else if (block.style.listType === 'ordered') {
-      // Count preceding ordered list items
-      let count = 1;
-      for (let i = index - 1; i >= 0; i--) {
-        if (blocks[i].style.listType === 'ordered') {
-          count++;
-        } else {
-          break;
-        }
-      }
-      return `${count}. `;
+  const getBlockStyles = (style: BlockStyle, isListItem: boolean = false) => {
+    const fontClass = FONT_FAMILIES.find(f => f.value === style.fontFamily)?.className || 'font-sans';
+    
+    let headingClass = '';
+    switch (style.headingLevel) {
+      case 'h1':
+        headingClass = 'text-4xl font-bold';
+        break;
+      case 'h2':
+        headingClass = 'text-2xl font-semibold';
+        break;
+      case 'h3':
+        headingClass = 'text-xl font-medium';
+        break;
     }
-    return '';
-  };
 
-  const getDisplayContent = (block: TextBlock, index: number): string => {
-    const prefix = getListPrefix(block, index);
-    return prefix + (block.content || '');
+    return cn(
+      fontClass,
+      headingClass,
+      style.bold && 'font-bold',
+      style.italic && 'italic',
+      style.underline && 'underline',
+      isListItem && 'ml-6'
+    );
   };
 
   return (
