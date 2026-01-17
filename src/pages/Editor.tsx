@@ -150,31 +150,31 @@ const Editor = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-3 bg-[#274364] border-b border-border">
-        <div className="flex items-center gap-4">
+      <header className="flex items-center justify-between px-3 md:px-6 py-3 bg-[#274364] border-b border-border">
+        <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate('/')}
-            className="text-white/70 hover:text-white hover:bg-white/10"
+            className="text-white/70 hover:text-white hover:bg-white/10 flex-shrink-0"
             title="Back to Home"
           >
             <Home className="w-4 h-4" />
           </Button>
           
-          <div className="flex items-center gap-2">
-            <img src="/logo.svg" alt="Font and Format" className="w-8 h-8 rounded" />
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <img src="/logo.svg" alt="Font and Format" className="w-6 h-6 md:w-8 md:h-8 rounded flex-shrink-0" />
             
             {/* Document Name */}
             {isEditingName ? (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 flex-1 min-w-0">
                 <Input
                   ref={nameInputRef}
                   value={tempName}
                   onChange={(e) => setTempName(e.target.value)}
                   onKeyDown={handleNameKeyDown}
                   onBlur={saveName}
-                  className="h-8 w-48 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                  className="h-8 flex-1 min-w-0 bg-white/10 border-white/20 text-white placeholder:text-white/50 text-sm"
                   placeholder="Document name"
                   autoFocus
                 />
@@ -182,7 +182,7 @@ const Editor = () => {
                   variant="ghost"
                   size="sm"
                   onClick={saveName}
-                  className="h-8 w-8 p-0 text-white/70 hover:text-white hover:bg-white/10"
+                  className="h-8 w-8 p-0 text-white/70 hover:text-white hover:bg-white/10 flex-shrink-0"
                 >
                   <Check className="w-4 h-4" />
                 </Button>
@@ -190,7 +190,7 @@ const Editor = () => {
                   variant="ghost"
                   size="sm"
                   onClick={cancelEditingName}
-                  className="h-8 w-8 p-0 text-white/70 hover:text-white hover:bg-white/10"
+                  className="h-8 w-8 p-0 text-white/70 hover:text-white hover:bg-white/10 flex-shrink-0"
                 >
                   <X className="w-4 h-4" />
                 </Button>
@@ -198,31 +198,64 @@ const Editor = () => {
             ) : (
               <button
                 onClick={startEditingName}
-                className="flex items-center gap-2 text-white hover:bg-white/10 px-2 py-1 rounded transition-colors group"
+                className="flex items-center gap-2 text-white hover:bg-white/10 px-2 py-1 rounded transition-colors group min-w-0 flex-1"
               >
-                <span className="font-medium">{documentName}</span>
-                <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-70 transition-opacity" />
+                <span className="font-medium text-sm md:text-base truncate">{documentName}</span>
+                <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-70 transition-opacity flex-shrink-0" />
               </button>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
+          {/* Mobile Layout Settings Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="lg:hidden text-white/70 hover:text-white hover:bg-white/10 p-2"
+            title="Layout Settings"
+          >
+            <Settings className="w-4 h-4" />
+          </Button>
+          
           <FileUpload onFileLoad={handleFileLoad} />
           <Button 
             onClick={handleExport}
             disabled={!hasContent}
-            className="gap-2 bg-[#3FBCBA] hover:bg-[#35a5a3] text-white"
+            className="gap-1 md:gap-2 bg-[#3FBCBA] hover:bg-[#35a5a3] text-white text-xs md:text-sm px-2 md:px-4"
           >
-            <Download className="w-4 h-4" />
-            Export PDF
+            <Download className="w-3 h-3 md:w-4 md:h-4" />
+            <span className="hidden sm:inline">Export PDF</span>
+            <span className="sm:hidden">PDF</span>
           </Button>
         </div>
       </header>
 
-      <div className="flex-1 flex">
-        {/* Left Sidebar */}
-        <div className={`border-r bg-card transition-all duration-300 flex flex-col ${sidebarOpen ? 'w-64' : 'w-12'}`}>
+      {/* Mobile Layout Panel - Collapsible */}
+      {sidebarOpen && (
+        <div className="lg:hidden border-b bg-card">
+          <div className="flex items-center justify-between p-3 border-b">
+            <span className="text-sm font-medium">Page Layout</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSidebarOpen(false)}
+              className="p-1 h-8 w-8"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+          <PageLayoutPanel
+            layout={pageLayout}
+            onLayoutChange={setPageLayout}
+          />
+        </div>
+      )}
+
+      <div className="flex-1 flex flex-col lg:flex-row">
+        {/* Left Sidebar - Hidden on mobile */}
+        <div className={`hidden lg:flex border-r bg-card transition-all duration-300 flex-col ${sidebarOpen ? 'w-64' : 'w-12'}`}>
           <div className="flex items-center justify-between p-2 border-b">
             {sidebarOpen && <span className="text-sm font-medium">Page Layout</span>}
             <Button
@@ -257,8 +290,8 @@ const Editor = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col">
-          <div className="flex-1 flex flex-col p-6 gap-4">
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 flex flex-col p-3 md:p-6 gap-3 md:gap-4">
             <FormatToolbar
               onFormat={handleFormat}
               onInsertImage={handleInsertImage}
@@ -267,7 +300,8 @@ const Editor = () => {
               formatState={formatState}
             />
 
-            <div className="flex-1 flex gap-6 min-h-0">
+            {/* Mobile: Stack vertically, Desktop: Side by side */}
+            <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-6 min-h-0">
               <BlockEditor
                 ref={editorRef}
                 content={content}

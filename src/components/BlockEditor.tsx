@@ -554,13 +554,13 @@ const BlockEditor = forwardRef<BlockEditorRef, BlockEditorProps>(({
   };
 
   return (
-    <div className="flex-1 bg-editor rounded-xl p-6 overflow-auto">
+    <div className="flex-1 bg-editor rounded-xl p-3 md:p-6 overflow-auto">
       <div
         ref={editorRef}
         contentEditable
         suppressContentEditableWarning
         className={cn(
-          "editor-content min-h-[600px] outline-none",
+          "editor-content min-h-[300px] md:min-h-[600px] outline-none",
           "prose prose-sm max-w-none",
           "[&>p]:my-2 [&>h1]:text-4xl [&>h1]:font-bold [&>h1]:my-4",
           "[&>h2]:text-2xl [&>h2]:font-semibold [&>h2]:my-3",
